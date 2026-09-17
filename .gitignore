@@ -1,0 +1,93 @@
+# ==========================================
+# SECRETOS Y VARIABLES DE ENTORNO
+# ==========================================
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+
+# ==========================================
+# FLUTTER / DART
+# ==========================================
+
+# Dependencias y archivos generados
+.dart_tool/
+.packages
+.pub/
+build/
+
+# Flutter plugin generated files
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Flutter/.last_build_id
+
+# ==========================================
+# IDE
+# ==========================================
+
+.idea/
+*.iml
+.vscode/
+
+# ==========================================
+# PYTHON / FASTAPI
+# ==========================================
+
+__pycache__/
+*.py[cod]
+*.pyo
+
+venv/
+.venv/
+env/
+
+.pytest_cache/
+.mypy_cache/
+
+# ==========================================
+# JUPYTER / IA
+# ==========================================
+
+.ipynb_checkpoints/
+
+# Modelos grandes
+*.h5
+*.hdf5
+*.keras
+*.pth
+*.pt
+*.onnx
+
+# ==========================================
+# DATOS DE IA
+# ==========================================
+
+# Dataset HAM10000
+ai/dataset/
+
+# Resultados de entrenamiento
+ai/mlruns/
+
+# ==========================================
+# SISTEMA OPERATIVO
+# ==========================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
