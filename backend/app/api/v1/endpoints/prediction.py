@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database.connection import get_db
 from app.schemas.prediction import PredictionResponse, PredictionCreate
 from app.services.prediction_service import PredictionService
 

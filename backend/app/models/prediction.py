@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from datetime import datetime
-from app.database import Base
+from app.database.connection import Base
 
 class PredictionModel(Base):
     __tablename__ = "prediccion"  # Nombre exacto de la tabla en tu PostgreSQL
