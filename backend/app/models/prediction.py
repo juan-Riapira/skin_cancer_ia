@@ -1,15 +1,41 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from datetime import datetime
-from app.database.connection import Base
+from typing import Optional, Any, Dict
+from pydantic import BaseModel, Field
+from app.database.base import MongoBaseModel, PyObjectId
 
-class PredictionModel(Base):
-    __tablename__ = "prediccion"  # Nombre exacto de la tabla en tu PostgreSQL
 
-    id_prediccion = Column(Integer, primary_key=True, index=True)
-    id_usuario = Column(Integer, ForeignKey("usuario.id_usuario", ondelete="CASCADE"), nullable=False)
-    clasificacion = Column(String(100), nullable=False)
-    enfermedad = Column(String(100), nullable=False)
-    confianza = Column(Float, nullable=False)
-    fecha = Column(DateTime, default=datetime.utcnow)
-    zona_cuerpo = Column(String(50), nullable=True)
-    url_imagen = Column(String, nullable=False)
+class ResultadoAnalisis(BaseModel):
+    """
+    Subdocumento que contiene los resultados detallados de la inferencia del modelo de IA.
+    """
+    clasificacion: str
+    nivel_riesgo: str
+    confianza: float
+    arquitectura: str
+    metrica: Optional[Dict[str, Any] | str] = None
+
+
+class AnalisisDermatologica(BaseModel):
+    """
+    Subdocumento que agrupa el análisis dermatológico y validación médica/patológica.
+    """
+    imagen_dermatologica: Optional[str] = None
+    clasificacion: str
+    validacion_patologia: Optional[str] = None
+    resultados: Optional[ResultadoAnalisis] = None
+
+
+class LesionModel(MongoBaseModel):
+    """
+    Modelo de documento para la colección 'lesiones' en MongoDB.
+    """
+    usuario_id: str
+    fecha_captura: datetime = Field(default_factory=datetime.utcnow)
+    imagen_movil: str
+    zona_cuerpo: Optional[str] = None
+    analisis_dermatologica: Optional[AnalisisDermatologica] = None
+
+
+# Alias para mantener compatibilidad con imports existentes
+PredictionModel = LesionModel
+Lesion = LesionModel

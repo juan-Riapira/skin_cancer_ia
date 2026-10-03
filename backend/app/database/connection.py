@@ -1,43 +1,51 @@
 import os
-
+from typing import Optional
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 load_dotenv()
 
+MONGO_URI: str = os.getenv("MONGO_URI")
+DB_NAME: str = os.getenv("DB_NAME")
 
-DATABASE_USER = os.getenv("DATABASE_USER")
-DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-DATABASE_HOST = os.getenv("DATABASE_HOST")
-DATABASE_PORT = os.getenv("DATABASE_PORT")
-DATABASE_NAME = os.getenv("DATABASE_NAME")
+client: Optional[AsyncIOMotorClient] = None
 
 
-DATABASE_URL = (
-    f"postgresql+psycopg://"
-    f"{DATABASE_USER}:{DATABASE_PASSWORD}@"
-    f"{DATABASE_HOST}:{DATABASE_PORT}/"
-    f"{DATABASE_NAME}"
-)
+def get_mongo_client() -> AsyncIOMotorClient:
+    """
+    Obtiene o inicializa el cliente asíncrono de MongoDB (Motor).
+    Mantiene una única instancia para reutilizar el pool de conexiones.
+    """
+    global client
+    if client is None:
+        client = AsyncIOMotorClient(
+            MONGO_URI,
+            serverSelectionTimeoutMS=5000
+        )
+    return client
 
 
-engine = create_engine(DATABASE_URL)
+def get_database() -> AsyncIOMotorDatabase:
+    """
+    Retorna la instancia de la base de datos MongoDB configurada.
+    """
+    mongo_client = get_mongo_client()
+    return mongo_client[DB_NAME]
 
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+async def get_db() -> AsyncIOMotorDatabase:
+    """
+    Inyección de dependencias para FastAPI que proporciona
+    la base de datos asíncrona de MongoDB.
+    """
+    return get_database()
 
-Base = declarative_base()
 
-def get_db():
-    db = SessionLocal()
-
-    try:
-        yield db
-    finally:
-        db.close()
+def close_mongo_connection() -> None:
+    """
+    Cierra la conexión del cliente MongoDB.
+    """
+    global client
+    if client:
+        client.close()
+        client = None
