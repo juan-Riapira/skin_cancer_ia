@@ -28,10 +28,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(
+    usuarios_router,
+    prefix="/api"
+)
+
 # Rutas v1 (NoSQL MongoDB Atlas)
 app.include_router(user.router, prefix="/api/v1")
 app.include_router(prediction.router, prefix="/api/v1")
-
 
 @app.get("/")
 def inicio():
