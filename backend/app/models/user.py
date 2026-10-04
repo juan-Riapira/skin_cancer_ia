@@ -1,33 +1,26 @@
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import Optional
+from pydantic import BaseModel, Field
+from app.database.base import MongoBaseModel, PyObjectId
 
-from app.database.base import Base
+
+class ZonaResidencial(BaseModel):
+    """
+    Subdocumento que representa la ubicación geográfica del usuario.
+    """
+    departamento: str
+    municipio: str
+    vereda: Optional[str] = None
 
 
-class Usuario(Base):
-    __tablename__ = "usuario"
+class UsuarioModel(MongoBaseModel):
+    """
+    Modelo de documento para la colección 'usuarios' en MongoDB.
+    """
+    nombre: str
+    edad: Optional[int] = None
+    genero: Optional[str] = None
+    zona_residencial: Optional[ZonaResidencial] = None
 
-    id_usuario: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True
-    )
 
-    nombre: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False
-    )
-
-    edad: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True
-    )
-
-    genero: Mapped[str | None] = mapped_column(
-        String(20),
-        nullable=True
-    )
-
-    id_ubicacion: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True
-    )
+# Alias para mantener compatibilidad con código existente
+Usuario = UsuarioModel
