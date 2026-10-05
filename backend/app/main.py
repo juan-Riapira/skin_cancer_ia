@@ -4,13 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.endpoints import prediction, user
 from app.database.connection import close_mongo_connection, get_database
+from app.services.storage_service import ensure_bucket
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: el cliente de MongoDB se inicializa de forma diferida (lazy) o en la primera petición
+    await ensure_bucket()   # crea el bucket 'lesiones' si no existe
     yield
-    # Shutdown: cerrar pools de conexión a MongoDB
     close_mongo_connection()
 
 
@@ -28,14 +28,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    usuarios_router,
-    prefix="/api"
-)
-
 # Rutas v1 (NoSQL MongoDB Atlas)
 app.include_router(user.router, prefix="/api/v1")
 app.include_router(prediction.router, prefix="/api/v1")
+
 
 @app.get("/")
 def inicio():

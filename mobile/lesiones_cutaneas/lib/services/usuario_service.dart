@@ -8,30 +8,35 @@ class UsuarioService {
     required String nombre,
     required int edad,
     required String genero,
-    required int idUbicacion,
+    required Map<String, String> zonaResidencial,
   }) async {
-    final url = Uri.parse('$baseUrl/api/usuarios');
+    final url = Uri.parse('$baseUrl/api/v1/usuarios');
 
-    final respuesta = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'nombre': nombre,
-        'edad': edad,
-        'genero': genero,
-        'id_ubicacion': idUbicacion,
-      }),
-    );
+    try {
+      final respuesta = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'nombre': nombre,
+          'edad': edad,
+          'genero': genero,
+          'zona_residencial': zonaResidencial,
+        }),
+      );
 
-    if (respuesta.statusCode == 200 || respuesta.statusCode == 201) {
-      return true;
+      if (respuesta.statusCode == 200 || respuesta.statusCode == 201) {
+        return true;
+      }
+
+      print('Error: ${respuesta.statusCode}');
+      print(respuesta.body);
+
+      return false;
+    } catch (e) {
+      print('Error de conexión: $e');
+      return false;
     }
-
-    print('Error: ${respuesta.statusCode}');
-    print(respuesta.body);
-
-    return false;
   }
 }
