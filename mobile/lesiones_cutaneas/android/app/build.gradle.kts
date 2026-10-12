@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "   "
+    namespace = "com.example.lesiones_cutaneas"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
