@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.database.connection import get_database
@@ -15,7 +15,7 @@ MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 @router.post("", response_model=PredictionResponse, status_code=201)
 async def crear_prediccion(
     usuario_id: str = Form(...),
-    zona_cuerpo: Optional[str] = Form(None),
+    zona_cuerpo: str = Form(...),
     imagen: UploadFile = File(...),
     db=Depends(get_database),
 ):
@@ -26,15 +26,15 @@ async def crear_prediccion(
     if len(contenido) > MAX_BYTES:
         raise HTTPException(413, "La imagen supera los 10 MB")
 
-    # 1) Guardar la imagen en MinIO y obtener su URL
+    # 1) Guardar la imagen en el almacenamiento S3 y obtener su URL
     image_url = await storage_service.upload_image(
         contenido, imagen.filename, imagen.content_type, usuario_id
     )
 
-    # 2) Inferencia: conecta aquí tu modelo (devuelve dict con clasificacion, confianza, arquitectura, ...)
+    # 2) Inferencia: conecta aquí tu modelo (dict con clasificacion, confianza, arquitectura, ...)
     ai_result = None  # TODO: ai_result = await run_inference(contenido)
 
-    # 3) Persistir en Mongo con la URL de MinIO
+    # 3) Persistir en Mongo con la URL del almacenamiento
     data = PredictionCreate(usuario_id=usuario_id, zona_cuerpo=zona_cuerpo)
     return await PredictionService.process_and_save(db, data, image_url, ai_result)
 

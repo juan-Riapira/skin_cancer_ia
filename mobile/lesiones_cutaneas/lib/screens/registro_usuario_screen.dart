@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/usuario_service.dart';
+import 'prediccion_screen.dart';
 
 final UsuarioService usuarioService = UsuarioService();
 
@@ -75,7 +76,8 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
 
     setState(() => cargando = true);
 
-    final resultado = await usuarioService.registrarUsuario(
+    // Ahora devuelve el id del usuario creado (o null si falló)
+    final usuarioId = await usuarioService.registrarUsuario(
       nombre: nombre,
       edad: edad,
       genero: generoSeleccionado!,
@@ -89,9 +91,20 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
     if (!mounted) return;
     setState(() => cargando = false);
 
-    mostrarMensaje(resultado
-        ? 'Usuario registrado correctamente'
-        : 'No se pudo registrar el usuario');
+    if (usuarioId == null) {
+      mostrarMensaje('No se pudo registrar el usuario');
+      return;
+    }
+
+    mostrarMensaje('Usuario registrado correctamente');
+
+    // Pasa a la pantalla de predicción llevando el id del usuario
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PrediccionScreen(usuarioId: usuarioId),
+      ),
+    );
   }
 
   InputDecoration _decoracion(String hint) {

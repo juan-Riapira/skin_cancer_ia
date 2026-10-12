@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "207836039519",
+    "project_id": "lesionescutaneas-99dbc",
+    "storage_bucket": "lesionescutaneas-99dbc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207836039519:android:13b10ee83897c464f60eea",
+        "android_client_info": {
+          "package_name": "com.example.lesiones_cutaneas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDF8Gg1kweDvDwo6SucobJ6IZ0hpeVFCaQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

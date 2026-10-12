@@ -9,6 +9,22 @@ def _oid(value: str):
     return ObjectId(value) if ObjectId.is_valid(value) else value
 
 
+def _analisis_pendiente(image_url: str) -> dict:
+    """Placeholder explícito mientras el modelo no haya analizado la imagen."""
+    return {
+        "imagen_dermatologica": image_url,
+        "clasificacion": "Pendiente",
+        "validacion_patologia": False,
+        "resultados": {
+            "clasificacion": "Pendiente",
+            "nivel_riesgo": "Pendiente",
+            "confianza": 0.0,
+            "arquitectura": "Pendiente",
+            "metrica": {},
+        },
+    }
+
+
 def _derivar_riesgo(clasificacion: str) -> str:
     c = clasificacion.lower()
     if "benign" in c or "benigno" in c:
@@ -27,8 +43,11 @@ class PredictionService:
         image_url: str,
         ai_result: Optional[dict] = None,
     ) -> dict:
-        """Guarda la lesión en 'lesiones'. image_url es la URL de MinIO."""
-        analisis = None
+        """Guarda la lesión en 'lesiones'. image_url es la URL del almacenamiento S3."""
+        # Por defecto, análisis pendiente (la regla de Mongo exige este campo)
+        analisis = _analisis_pendiente(image_url)
+
+        # Si el modelo ya devolvió resultados reales, reemplazan al placeholder
         if ai_result:
             clasificacion = str(ai_result.get("clasificacion") or ai_result.get("classification"))
             resultado_clasificacion = str(ai_result.get("clasificacion_modelo") or clasificacion)
@@ -52,6 +71,7 @@ class PredictionService:
             "zona_cuerpo": data.zona_cuerpo,
             "analisis_dermatologica": analisis,
         }
+
         res = await db["lesiones"].insert_one(documento)
         documento["_id"] = res.inserted_id
         return documento

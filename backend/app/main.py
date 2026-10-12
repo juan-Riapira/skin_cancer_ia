@@ -28,7 +28,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Rutas v1 (NoSQL MongoDB Atlas)
 app.include_router(user.router, prefix="/api/v1")
 app.include_router(prediction.router, prefix="/api/v1")
 
@@ -44,12 +43,9 @@ def inicio():
 
 @app.get("/health")
 async def health_check():
-    """
-    Verifica el estado del servicio y la conectividad básica con MongoDB.
-    """
+    """Verifica el estado del servicio y la conectividad básica con MongoDB."""
     try:
         db = get_database()
-        # Ping a MongoDB Atlas
         await db.command("ping")
         mongo_status = "connected"
     except Exception as e:
