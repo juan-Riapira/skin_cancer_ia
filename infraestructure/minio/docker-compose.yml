@@ -1,30 +1,46 @@
-﻿services:
+services:
+  # ==============================================================================
+  # SERVICIO COMPATIBLE S3 / MINIO (RUSTFS / MINIO)
+  # Debido al retiro de las imágenes comunitarias 'minio/minio' de Docker Hub y Quay.io,
+  # se utiliza la imagen S3-compatible que expone exactamente los mismos puertos y API.
+  # ==============================================================================
   minio:
-    image: minio/minio:edge
+    image: rustfs/rustfs:latest
     container_name: skin_cancer_minio
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Consola Web
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      RUSTFS_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      RUSTFS_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      RUSTFS_ADDRESS: "0.0.0.0:9000"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
     volumes:
       - minio_data:/data
-    command: minio server /data --console-address :9001
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:9000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
+  # ==============================================================================
+  # IMAGEN ORIGINAL DE MINIO (COMENTADA POR REQUERIMIENTO / DISPONIBILIDAD)
+  # ==============================================================================
+  # minio_original:
+  #   image: minio/minio:edge
+  #   container_name: skin_cancer_minio_original
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   environment:
+  #     MINIO_ROOT_USER: minioadmin
+  #     MINIO_ROOT_PASSWORD: minioadmin
+  #   volumes:
+  #     - minio_data:/data
+  #   command: minio server /data --console-address :9001
+  #   restart: unless-stopped
+
 volumes:
   minio_data:
-
-
-
-
-
-
-

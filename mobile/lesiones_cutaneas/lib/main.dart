@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/registro_usuario_screen.dart';
+import 'screens/inicio_screen.dart';
+import 'utils/app_colors.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,12 +15,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Lesiones Cutáneas',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primario),
         useMaterial3: true,
       ),
-      home: const RegistroUsuarioScreen(),
+      initialRoute: '/inicio',
+      routes: {'/inicio': (_) => const InicioScreen()},
     );
   }
 }

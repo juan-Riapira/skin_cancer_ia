@@ -91,3 +91,5 @@ ai/mlruns/
 .DS_Store
 Thumbs.db
 desktop.ini
+# Imágenes de respaldo local (cuando MinIO está apagado)
+backend/uploads/

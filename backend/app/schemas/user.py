@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from app.database.base import MongoBaseModel, PyObjectId
 
 
@@ -24,7 +24,17 @@ class UsuarioCreate(UsuarioBase):
     Esquema para creación de un nuevo usuario.
     Permite id_ubicacion opcional por compatibilidad con versiones cliente previas.
     """
+    nombre: str = Field(..., min_length=1, max_length=100)
+    edad: Optional[int] = Field(None, ge=0, le=120)
     id_ubicacion: Optional[int] = None
+
+    @field_validator("nombre")
+    @classmethod
+    def nombre_sin_espacios(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("El nombre no puede estar vacío")
+        return v
 
 
 class UsuarioUpdate(BaseModel):

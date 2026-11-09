@@ -1,113 +1,124 @@
+"""
+Servicio de almacenamiento en AWS S3.
+
+NOTA IMPORTANTE:
+Toda la lógica original directa con AWS S3 ha sido comentada según requerimiento:
+"modifica no borres solo pon como comentario toda la parte de s3,
+por ahora como esta en el docker-compose vamos a utilizar minio".
+
+NO BORRAR este código. Sirve de referencia directa para cuando se retome
+el despliegue en producción con AWS S3 real.
+"""
+
 import os
 import uuid
+import logging
+from typing import Optional
+from fastapi import UploadFile, HTTPException, status
+from app.services import storage_service
 
-import boto3
-from botocore.config import Config
-from botocore.exceptions import BotoCoreError, ClientError
-from fastapi import HTTPException, status, UploadFile
+logger = logging.getLogger(__name__)
+
+# ==============================================================================
+# CÓDIGO ORIGINAL AWS S3 (COMENTADO - NO BORRAR SEGÚN INSTRUCCIÓN DEL USUARIO)
+# ==============================================================================
+# import boto3
+# from botocore.config import Config
+# from botocore.exceptions import BotoCoreError, ClientError
+#
+# class S3ServiceAWS:
+#     @staticmethod
+#     def _get_client():
+#         endpoint_url = os.getenv("S3_ENDPOINT_URL")
+#         use_ssl = os.getenv("AWS_USE_SSL", "true").lower() == "true"
+#         region = os.getenv("AWS_REGION", "us-east-1")
+#         access_key = os.getenv("AWS_ACCESS_KEY_ID")
+#         secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+#         force_path_style = False
+#
+#         config = Config(
+#             signature_version="s3v4",
+#             s3={"addressing_style": "virtual"},
+#         )
+#
+#         client_kwargs = {
+#             "aws_access_key_id": access_key,
+#             "aws_secret_access_key": secret_key,
+#             "region_name": region,
+#             "config": config,
+#         }
+#
+#         if endpoint_url:
+#             client_kwargs["endpoint_url"] = endpoint_url
+#             client_kwargs["use_ssl"] = use_ssl
+#
+#         return boto3.client("s3", **client_kwargs)
+#
+#     @classmethod
+#     async def upload_image(cls, file: UploadFile) -> str:
+#         bucket_name = os.getenv("S3_BUCKET_NAME")
+#         if not bucket_name:
+#             raise HTTPException(
+#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 detail="Bucket name not configured (S3_BUCKET_NAME)",
+#             )
+#
+#         region = os.getenv("AWS_REGION", "us-east-1")
+#         file_extension = file.filename.split(".")[-1] if file and "." in file.filename else "jpg"
+#         unique_filename = f"lesions/{uuid.uuid4()}.{file_extension}"
+#
+#         s3_client = cls._get_client()
+#
+#         try:
+#             contents = await file.read()
+#             if hasattr(file, "seek"):
+#                 await file.seek(0)
+#
+#             s3_client.put_object(
+#                 Bucket=bucket_name,
+#                 Key=unique_filename,
+#                 Body=contents,
+#                 ContentType=file.content_type or "image/jpeg",
+#             )
+#
+#             # AWS S3 (virtual-hosted URL)
+#             return f"https://{bucket_name}.s3.{region}.amazonaws.com/{unique_filename}"
+#
+#         except (BotoCoreError, ClientError) as e:
+#             raise HTTPException(
+#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 detail=f"Error al subir la imagen a AWS S3: {str(e)}",
+#             )
+# ==============================================================================
 
 
 class S3Service:
-    @staticmethod
-    def _get_client():
-        endpoint_url = os.getenv("MINIO_ENDPOINT") or os.getenv("S3_ENDPOINT_URL")
-        use_ssl = os.getenv("MINIO_USE_SSL", "false").lower() == "true"
-        region = os.getenv("MINIO_REGION") or os.getenv("AWS_REGION", "us-east-1")
-        access_key = os.getenv("MINIO_ACCESS_KEY") or os.getenv("AWS_ACCESS_KEY_ID")
-        secret_key = os.getenv("MINIO_SECRET_KEY") or os.getenv("AWS_SECRET_ACCESS_KEY")
-        force_path_style = os.getenv("MINIO_FORCE_PATH_STYLE", "true").lower() == "true"
-
-        config = Config(
-            signature_version="s3v4",
-            s3={"addressing_style": "path" if force_path_style else "virtual"},
-        )
-
-        client_kwargs = {
-            "aws_access_key_id": access_key,
-            "aws_secret_access_key": secret_key,
-            "region_name": region,
-            "config": config,
-        }
-
-        if endpoint_url:
-            client_kwargs["endpoint_url"] = endpoint_url
-            client_kwargs["use_ssl"] = use_ssl
-            if not use_ssl:
-                client_kwargs["verify"] = False
-
-        return boto3.client("s3", **client_kwargs)
+    """
+    Adaptador de compatibilidad para S3Service.
+    Redirige todas las operaciones de almacenamiento al servicio activo (MinIO en Docker)
+    gestionado a través de 'storage_service.py'.
+    """
 
     @classmethod
-    async def upload_image(cls, file: UploadFile) -> str:
-        bucket_name = os.getenv("MINIO_BUCKET_NAME") or os.getenv("S3_BUCKET_NAME")
-        if not bucket_name:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Bucket name not configured (MINIO_BUCKET_NAME or S3_BUCKET_NAME)",
-            )
-
-        endpoint_url = os.getenv("MINIO_ENDPOINT") or os.getenv("S3_ENDPOINT_URL")
-        region = os.getenv("MINIO_REGION") or os.getenv("AWS_REGION", "us-east-1")
-        force_path_style = os.getenv("MINIO_FORCE_PATH_STYLE", "true").lower() == "true"
-        use_ssl = os.getenv("MINIO_USE_SSL", "false").lower() == "true"
-        use_presigned = os.getenv("MINIO_USE_PRESIGNED_URL", "false").lower() == "true"
-        presigned_expiry = int(os.getenv("MINIO_PRESIGNED_EXPIRY_SECONDS", "604800"))
-
-        # Generar un nombre único para evitar que imágenes con el mismo nombre se sobrescriban
-        file_extension = file.filename.split(".")[-1] if file and "." in file.filename else "jpg"
-        unique_filename = f"lesions/{uuid.uuid4()}.{file_extension}"
-
-        s3_client = cls._get_client()
-
+    async def upload_image(cls, file: UploadFile, usuario_id: str = "general") -> str:
+        """
+        Lee el archivo y delega la subida a MinIO en Docker.
+        Retorna la URL accesible de la imagen en MinIO.
+        """
         try:
-            # Asegurar que el bucket exista (útil con MinIO en Docker)
-            try:
-                s3_client.head_bucket(Bucket=bucket_name)
-            except ClientError as e:
-                error_code = e.response.get("Error", {}).get("Code")
-                if error_code in ("404", "NoSuchBucket", "NotFound"):
-                    try:
-                        s3_client.create_bucket(Bucket=bucket_name)
-                    except ClientError as ce:
-                        raise HTTPException(
-                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Error al crear bucket en storage: {str(ce)}",
-                        )
-                else:
-                    raise
-
-            # Leer el contenido binario del archivo
-            contents = await file.read()
+            contenido = await file.read()
             if hasattr(file, "seek"):
                 await file.seek(0)
 
-            s3_client.put_object(
-                Bucket=bucket_name,
-                Key=unique_filename,
-                Body=contents,
-                ContentType=file.content_type or "image/jpeg",
+            return await storage_service.upload_image(
+                data=contenido,
+                filename=file.filename or "imagen.jpg",
+                content_type=file.content_type or "image/jpeg",
+                usuario_id=usuario_id,
             )
-
-            # Construir la URL para guardar en MongoDB
-            if endpoint_url:
-                if use_presigned:
-                    url = s3_client.generate_presigned_url(
-                        "get_object",
-                        Params={"Bucket": bucket_name, "Key": unique_filename},
-                        ExpiresIn=presigned_expiry,
-                    )
-                    return url
-
-                base = endpoint_url.rstrip("/")
-                if force_path_style:
-                    return f"{base}/{bucket_name}/{unique_filename}"
-                return f"{base}/{unique_filename}"
-            else:
-                # AWS S3 (virtual-hosted)
-                return f"https://{bucket_name}.s3.{region}.amazonaws.com/{unique_filename}"
-
-        except (BotoCoreError, ClientError) as e:
+        except Exception as e:
+            logger.error("Error delegando subida a MinIO desde S3Service: %s", e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error al subir la imagen al storage: {str(e)}",
+                detail=f"Error al subir la imagen al almacenamiento MinIO: {str(e)}",
             )

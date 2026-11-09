@@ -1,13 +1,18 @@
-﻿services:
+services:
+  # ==============================================================================
+  # SERVICIO DE ALMACENAMIENTO S3-COMPATIBLE (MINIO / RUSTFS)
+  # Emulación local de S3 mediante contenedor Docker para almacenamiento de imágenes
+  # ==============================================================================
   storage:
     image: rustfs/rustfs:latest
     container_name: skin_cancer_storage
     ports:
-      - "9000:9000"   # API S3
-      - "9001:9001"   # Consola web
+      - "9000:9000"   # API compatible con AWS S3 / MinIO
+      - "9001:9001"   # Consola Web (http://localhost:9001)
     environment:
-      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
-      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      # Credenciales compatibles con MinIO
+      RUSTFS_ACCESS_KEY: ${MINIO_ACCESS_KEY:-${S3_ACCESS_KEY:-minioadmin}}
+      RUSTFS_SECRET_KEY: ${MINIO_SECRET_KEY:-${S3_SECRET_KEY:-minioadmin}}
       RUSTFS_ADDRESS: "0.0.0.0:9000"
       RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
     volumes:
@@ -20,5 +25,24 @@
       retries: 5
       start_period: 10s
 
+  # ==============================================================================
+  # CONFIGURACIÓN MINIO OFICIAL ALTERNATIVA (COMENTADA POR REQUERIMIENTO)
+  # Si se cuenta con una imagen local o espejo privado de MinIO oficial:
+  # ==============================================================================
+  # minio_oficial:
+  #   image: minio/minio:edge
+  #   container_name: skin_cancer_minio
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   environment:
+  #     MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+  #     MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+  #   command: minio server /data --console-address :9001
+  #   volumes:
+  #     - minio_data:/data
+  #   restart: unless-stopped
+
 volumes:
   rustfs_data:
+  # minio_data:

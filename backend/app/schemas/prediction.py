@@ -48,7 +48,10 @@ class PredictionResponse(MongoBaseModel):
             if not self.classification:
                 self.classification = self.analisis_dermatologica.clasificacion
             if not self.disease:
-                self.disease = self.analisis_dermatologica.clasificacion
+                if self.analisis_dermatologica.resultados and self.analisis_dermatologica.resultados.clasificacion:
+                    self.disease = self.analisis_dermatologica.resultados.clasificacion
+                else:
+                    self.disease = self.analisis_dermatologica.clasificacion
             if self.analisis_dermatologica.resultados and self.confidence is None:
                 self.confidence = self.analisis_dermatologica.resultados.confianza
         return self
